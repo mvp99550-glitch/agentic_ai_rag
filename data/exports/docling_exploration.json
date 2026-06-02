@@ -1,0 +1,194 @@
+[
+  {
+    "page": 1,
+    "level": 1,
+    "type": "PictureItem",
+    "text": "<!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)` -->",
+    "text_len": 95,
+    "label": "picture"
+  },
+  {
+    "page": 3,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "CORPORATE FINANCE",
+    "text_len": 17,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'I discovered finance with 'The Vernimmen' about 30 years ago. Since then the different versions have accompanied me throughout my career and throughout the world. Not only was the alignment of the successive editions looking good in my different offices but I must confess I have opened and cherished each of them. Whether an investment banker, a CFO in a universal bank or more simply a world banker...'",
+    "text_len": 405,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Bertrand Badre, Managing Director and CFO of the World Bank",
+    "text_len": 59,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'I  opened my first Vernimmen in 1982. After having spent just a few weekends reading it, I felt better equipped for my role in financial management at Paribas. Now at Apax, the Vernimmen remains my companion in my search for value creation (key in the private equity industry).'",
+    "text_len": 279,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Monique Cohen, Associated Director, Apax Partners",
+    "text_len": 49,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "' Corporate Finance is a very useful reference book for students and practitioners, it will help both to understand the principles of the financial markets and their practical application in today's complex environment. The book's approach is both logical and sequential and presents some interesting cases that make study easier and more stimulating.'",
+    "text_len": 352,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Gabriele Galateri, Chairman of Telecom Italia",
+    "text_len": 45,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'Vernimmen's Corporate Finance is  an  outstanding  clear  and  complete  manual,  a  wonderful merger of practice and theory. Its coverage of the market aspects of corporate finance distinguishes its content, but its treatment of all the material makes it essential reading for the student, financier or industrialist.'",
+    "text_len": 320,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Howard Jones, Senior Research Fellow in Finance at Saïd Business School, University of Oxford",
+    "text_len": 93,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'The book itself covers all the important techniques that a financial manager must have in his repertoire of tools. The exposition is clear and concise and, most importantly, relies on commonsense reasoning throughout. This is not a book with obscure formulae, yet is still rigorous and at the same time a model of clarity.'",
+    "text_len": 324,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Richard Roll, Joel Fried Professor of Applied Finance at UCLA Anderson",
+    "text_len": 70,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'Corporate finance is a lively subject that changes from day to day and evolves regularly, depending on new market developments. The Vernimmen is a true bible of corporate finance. With regular updates through their monthly newsletter and upgrades, the authors have made it applicable to any place, any time. This is pretty unique in the field.'",
+    "text_len": 345,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Mehdi Sethom, Managing Director, Swicorp, Head of Advisory",
+    "text_len": 58,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'Written in a fluent and readable style and supplemented by numerous real-world examples, Corporate Finance: Theory and Practice has served as an excellent aid to my studies of finance. The book's broad content has been indispensable in acquiring a better understanding of all the core areas of finance, ranging from the basics of financial analysis through to the workings of complex M&A transactions and cutting edge financial products.'",
+    "text_len": 439,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Geoffrey Coombs, Student at ESCP Europe",
+    "text_len": 39,
+    "label": "section_header"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "TextItem",
+    "text": "'What sets the Vernimmen apart from other textbooks is its integration of practice and current affairs in a rigorous theoretical framework. Recipes and pontification are replaced by a scientific approach. And, thanks to the Newsletter, this is done practically in real time!'",
+    "text_len": 275,
+    "label": "text"
+  },
+  {
+    "page": 4,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Christophe Evers, Professor of Finance at the Solvay Brussels School, Executive Director of Texaf",
+    "text_len": 97,
+    "label": "section_header"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Pierre Vernimmen",
+    "text_len": 16,
+    "label": "section_header"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "CORPORATE FINANCE",
+    "text_len": 17,
+    "label": "section_header"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "TextItem",
+    "text": "THEORY AND PRACTICE",
+    "text_len": 19,
+    "label": "text"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "SectionHeaderItem",
+    "text": "Fourth Edition",
+    "text_len": 14,
+    "label": "section_header"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "TextItem",
+    "text": "Pascal Quiry Maurizio Dallocchio Yann Le Fur Antonio Salvi This edition first published 2014 © 2014 John Wiley and Sons, Ltd First edition published 2005, second edition published 2009, third edition published 2011 all by John Wiley & Sons, Ltd.",
+    "text_len": 245,
+    "label": "text"
+  },
+  {
+    "page": 5,
+    "level": 1,
+    "type": "PictureItem",
+    "text": "<!-- 🖼️❌ Image not available. Please use `PdfPipelineOptions(generate_picture_images=True)` -->",
+    "text_len": 95,
+    "label": "picture"
+  }
+]
