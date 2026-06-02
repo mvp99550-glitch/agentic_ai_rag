@@ -1,0 +1,18 @@
+# Prompt Version Registry
+# Tracks which prompt version is active in each environment.
+# Update this file when deploying a new prompt version — never edit a prompt
+# file in place; create a new version and update the pointer here.
+
+active:
+  planner:    "1.0.0"
+  retriever:  "1.0.0"
+  reasoner:   "1.0.0"
+  generator:  "1.0.0"
+  guardrail_input:  "1.0.0"
+  guardrail_output: "1.0.0"
+
+history:
+  planner:
+    - version: "1.0.0"
+      deployed: "2026-06-01"
+      notes: "Initial pilot prompt"
