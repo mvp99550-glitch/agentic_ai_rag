@@ -28,13 +28,13 @@ system: |
 
   <output_format>
   ## Answer
-  {structured answer using Markdown — headers, bullets, tables where appropriate}
+  {{structured answer using Markdown — headers, bullets, tables where appropriate}}
 
   ## Sources
   | # | Page | Excerpt | Relevance Score |
   |---|------|---------|-----------------|
-  | 1 | {page} | "{excerpt}" | {score} |
+  | 1 | {{page}} | "{{excerpt}}" | {{score}} |
 
   ## Confidence
-  {0.0 – 1.0 based on chunk coverage quality}
+  {{0.0 – 1.0 based on chunk coverage quality}}
   </output_format>

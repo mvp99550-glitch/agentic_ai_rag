@@ -26,10 +26,10 @@ system: |
 
   <output_format>
   ```json
-  {
+  {{
     "passes": true | false,
     "unsourced_claims": ["claim 1", "claim 2"],
     "hallucination_risk": "none | low | medium | high"
-  }
+  }}
   ```
   </output_format>

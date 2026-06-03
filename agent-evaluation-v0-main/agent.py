@@ -1,5 +1,5 @@
 """
-Claude-based QA agent with tool use for multi-hop question answering.
+Groq-based QA agent with tool use for multi-hop question answering.
 
 This is the agent being evaluated. It starts deliberately naive (minimal system
 prompt, simple tool loop) so that Phase 2's autoresearch loop has room to improve it.
@@ -8,8 +8,8 @@ The agent has two tools:
 - search_paragraphs(query): keyword search over the provided context paragraphs
 - read_paragraph(title): read all sentences of a specific paragraph by title
 
-The agent loop: send question → if Claude uses tools, execute them and loop back →
-when Claude responds with text (no tools), return that as the answer.
+The agent loop: send question → if model uses tools, execute them and loop back →
+when model responds with text (no tools), return that as the answer.
 
 Phase 2 can edit this file and system_prompt.md to improve scores.
 """
@@ -18,24 +18,24 @@ import json
 import os
 from pathlib import Path
 
-import anthropic
 from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, SystemMessage
+from langchain_groq import ChatGroq
 from langfuse import get_client
 
 load_dotenv()
 
-client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 langfuse = get_client()
-MODEL = "claude-sonnet-4-6"
+MODEL    = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 SYSTEM_PROMPT = Path("system_prompt.md").read_text().strip()
 
-# Tool definitions for Claude
+# ── Tool definitions ──────────────────────────────────────────────────────────
 TOOLS = [
     {
         "name": "search_paragraphs",
-        "description": "Search the available context paragraphs by keyword. Returns paragraphs whose title or sentences contain the query terms.",
-        "input_schema": {
+        "description": "Search context paragraphs by keyword. Returns paragraphs whose title or sentences contain the query terms.",
+        "parameters": {
             "type": "object",
             "properties": {
                 "query": {
@@ -48,8 +48,8 @@ TOOLS = [
     },
     {
         "name": "read_paragraph",
-        "description": "Read all sentences of a specific paragraph by its title.",
-        "input_schema": {
+        "description": "Read all sentences of a specific paragraph by its exact title.",
+        "parameters": {
             "type": "object",
             "properties": {
                 "title": {
@@ -62,34 +62,27 @@ TOOLS = [
     },
 ]
 
+llm = ChatGroq(
+    model=MODEL,
+    api_key=os.environ["GROQ_API_KEY"],
+    max_tokens=8192,
+    temperature=1,
+).bind_tools(TOOLS)
+
+
+# ── Tool executors ────────────────────────────────────────────────────────────
 
 def execute_search_paragraphs(query: str, context: list) -> list[dict]:
-    """Search context paragraphs by keyword matching.
-
-    Splits the query into individual terms and returns any paragraph whose
-    title + sentences contain at least one query term (case-insensitive).
-    Returns a list of {"title": str, "sentences": list[str]} dicts.
-    """
-    query_lower = query.lower()
-    query_terms = query_lower.split()
+    terms = query.lower().split()
     results = []
-
     for title, sentences in context:
         text = (title + " " + " ".join(sentences)).lower()
-        if any(term in text for term in query_terms):
-            results.append({
-                "title": title,
-                "sentences": sentences,
-            })
-
+        if any(t in text for t in terms):
+            results.append({"title": title, "sentences": sentences})
     return results
 
 
 def execute_read_paragraph(title: str, context: list) -> str | None:
-    """Return all sentences joined as a single string for the given paragraph title.
-
-    Returns None if no paragraph with that exact title exists in context.
-    """
     for ctx_title, sentences in context:
         if ctx_title == title:
             return " ".join(sentences)
@@ -97,107 +90,72 @@ def execute_read_paragraph(title: str, context: list) -> str | None:
 
 
 def execute_tool(tool_name: str, tool_input: dict, context: list) -> str:
-    """Dispatch a tool call by name and return the result as a string.
-
-    This is the bridge between Claude's tool_use blocks and the local
-    tool implementations. Returns a human-readable error for unknown tools.
-    """
     if tool_name == "search_paragraphs":
         results = execute_search_paragraphs(tool_input["query"], context)
-        if not results:
-            return "No paragraphs found matching your query."
-        return json.dumps(results, indent=2)
+        return json.dumps(results, indent=2) if results else "No paragraphs found matching your query."
     elif tool_name == "read_paragraph":
         result = execute_read_paragraph(tool_input["title"], context)
-        if result is None:
-            return f"No paragraph found with title '{tool_input['title']}'."
-        return result
-    else:
-        return f"Unknown tool: {tool_name}"
+        return result if result else f"No paragraph found with title '{tool_input['title']}'."
+    return f"Unknown tool: {tool_name}"
 
+
+# ── Agent loop ────────────────────────────────────────────────────────────────
 
 def run_agent(question: str, context: list) -> dict:
     """
     Run the QA agent on a question with given context paragraphs.
 
-    Args:
-        question: The question to answer
-        context: List of [title, [sentences...]] paragraphs to search
-
     Returns:
-        {
-            "answer": str,
-            "trajectory": list,  # List of tool calls with inputs and outputs
-            "token_usage": int,
-        }
+        {"answer": str, "trajectory": list, "token_usage": int}
     """
-    messages = [{"role": "user", "content": question}]
-    trajectory = []
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=question),
+    ]
+    trajectory   = []
     total_tokens = 0
-    max_iterations = 10
+    max_turns    = 10
 
-    for turn in range(max_iterations):
+    for turn in range(max_turns):
         with langfuse.start_as_current_generation(
             name=f"agent-turn-{turn + 1}",
             model=MODEL,
-            input=messages,
+            input=[m.content for m in messages],
         ) as generation:
-            response = client.messages.create(
-                model=MODEL,
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                tools=TOOLS,
-                messages=messages,
-            )
+            response = llm.invoke(messages)
             generation.update(
-                output=[b.model_dump() for b in response.content],
+                output=response.content,
                 usage_details={
-                    "input": response.usage.input_tokens,
-                    "output": response.usage.output_tokens,
+                    "input":  getattr(response.usage_metadata, "input_tokens",  0),
+                    "output": getattr(response.usage_metadata, "output_tokens", 0),
                 },
             )
 
-        total_tokens += response.usage.input_tokens + response.usage.output_tokens
+        total_tokens += (
+            getattr(response.usage_metadata, "input_tokens",  0) +
+            getattr(response.usage_metadata, "output_tokens", 0)
+        )
 
-        # Check if the model wants to use tools
-        tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-
-        if not tool_use_blocks:
-            # No tool use — extract final answer from text
-            text_blocks = [b for b in response.content if b.type == "text"]
-            answer = " ".join(b.text for b in text_blocks).strip()
+        if not response.tool_calls:
             return {
-                "answer": answer,
-                "trajectory": trajectory,
+                "answer":      response.content or "Unable to determine the answer.",
+                "trajectory":  trajectory,
                 "token_usage": total_tokens,
             }
 
-        # Process tool calls
-        tool_results = []
-        for tool_block in tool_use_blocks:
-            tool_name = tool_block.name
-            tool_input = tool_block.input
-            tool_output = execute_tool(tool_name, tool_input, context)
+        messages.append(response)
 
+        for tc in response.tool_calls:
+            tool_output = execute_tool(tc["name"], tc["args"], context)
             trajectory.append({
-                "tool": tool_name,
-                "input": tool_input,
+                "tool":   tc["name"],
+                "input":  tc["args"],
                 "output": tool_output,
             })
+            messages.append(ToolMessage(content=tool_output, tool_call_id=tc["id"]))
 
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tool_block.id,
-                "content": tool_output,
-            })
-
-        # Add assistant message and tool results to conversation
-        messages.append({"role": "assistant", "content": response.content})
-        messages.append({"role": "user", "content": tool_results})
-
-    # Hit max iterations — return whatever we have
     return {
-        "answer": "Unable to determine the answer.",
-        "trajectory": trajectory,
+        "answer":      "Unable to determine the answer.",
+        "trajectory":  trajectory,
         "token_usage": total_tokens,
     }

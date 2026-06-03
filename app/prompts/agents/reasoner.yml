@@ -28,10 +28,10 @@ system: |
   Return a JSON object:
 
   ```json
-  {
+  {{
     "context_sufficient": true | false,
     "retrieval_gap": "what specific information is still missing (empty string if sufficient)",
     "confidence": 0.0
-  }
+  }}
   ```
   </output_format>
