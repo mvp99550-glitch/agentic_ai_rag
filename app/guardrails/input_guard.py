@@ -66,7 +66,7 @@ _PII_FISHING_PATTERNS = [
 
 _CONFIDENTIAL_PATTERNS = [
     r"(reveal|show|expose|leak)\s+(\w+\s+)?(confidential|secret|private|internal|proprietary)",
-    r"(reveal|show|expose|leak)\s+(your|the|my|our)\s+(\w+\s+)?(api.?key|credential|secret|token|password)",
+    r"(reveal|show|expose|leak)\s+(\w+\s+)?(your|the|my|our)\s+(\w+\s+)?(api.?key|credential|secret|token|password)",
     r"(what\s+are\s+your|show\s+me\s+your)\s+(api\s+key|credentials|secrets|tokens|passwords)",
     r"(access|read|view)\s+(system\s+)?(config|configuration|env|environment\s+variable)",
     r"internal\s+(document|memo|report|strategy)",
@@ -96,7 +96,8 @@ MIN_QUESTION_LEN = 3
 def check(question: str) -> GuardResult:
     """Run all input checks. Returns GuardResult(PASS) or GuardResult(BLOCK, reason)."""
 
-    # 1 — Length
+    # 1 — Length (strip first so whitespace-only strings are caught)
+    question = question.strip()
     if len(question) < MIN_QUESTION_LEN:
         return GuardResult(Decision.BLOCK, "Query too short.")
     if len(question) > MAX_QUESTION_LEN:

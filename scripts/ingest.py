@@ -37,8 +37,8 @@ OUT_DIR    = Path("data/processed")
 IMAGES_DIR = OUT_DIR / "images"
 
 SAMPLE_ONLY = True
-START_PAGE  = 180    # first page of this batch (inclusive)
-END_PAGE    = 200    # last page of this batch (inclusive)
+START_PAGE  = 801    # first page of this batch (inclusive)
+END_PAGE    = 1050   # last page of this batch (inclusive, covers end of book)
 
 FRONT_MATTER_PAGES  = {1, 2, 3, 4, 5}
 TABLE_CONTEXT_LINES = 8
@@ -310,7 +310,11 @@ def main():
         print(f"  {path.name}: {len(existing)} existing + {len(new_data)} new = {len(merged)} total")
 
     print("\nVerifying data integrity...")
-    verify_outputs(out_text, out_tables, out_images, text_chunks, table_chunks, image_refs)
+    # Pass merged totals so verify_outputs compares disk count against cumulative total
+    with open(out_text,   encoding="utf-8") as f: merged_text   = json.load(f)
+    with open(out_tables, encoding="utf-8") as f: merged_tables = json.load(f)
+    with open(out_images, encoding="utf-8") as f: merged_images = json.load(f)
+    verify_outputs(out_text, out_tables, out_images, merged_text, merged_tables, merged_images)
 
     print(f"\nSaved to {OUT_DIR}/")
     print(f"  text_chunks.json   ({len(text_chunks)} chunks)")
