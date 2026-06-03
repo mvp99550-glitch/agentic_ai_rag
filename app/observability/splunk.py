@@ -14,6 +14,7 @@ import ssl
 import threading
 import time
 import urllib.request
+import uuid
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -39,8 +40,9 @@ def _worker() -> None:
     verify  = os.getenv("SPLUNK_VERIFY_SSL", "true").lower() != "false"
     ctx     = ssl.create_default_context() if verify else ssl._create_unverified_context()
     headers = {
-        "Authorization": f"Splunk {token}",
-        "Content-Type": "application/json",
+        "Authorization":            f"Splunk {token}",
+        "Content-Type":             "application/json",
+        "X-Splunk-Request-Channel": str(uuid.uuid4()),
     }
 
     while True:
