@@ -26,4 +26,6 @@ dependencies = [
     "langfuse>=4.7.1",
     "datasets>=4.8.5",
     "psutil>=6.0.0",
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
 ]

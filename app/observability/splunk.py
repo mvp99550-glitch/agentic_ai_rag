@@ -80,7 +80,7 @@ def _send(index: str, sourcetype: str, event: dict[str, Any]) -> None:
     }
     try:
         _QUEUE.put_nowait(payload)
-    except queue.Full:
+    except Exception:
         pass
 
 

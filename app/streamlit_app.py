@@ -27,22 +27,23 @@ st.markdown("""
 * { font-family: 'Inter', sans-serif; }
 
 /* Base */
-.stApp { background: #000814; color: #e2eaf5; }
+.stApp { background: #f8f9fa; color: #1a1a2e; }
 section[data-testid="stSidebar"] {
-    background: #00091f;
-    border-right: 1px solid #0a2a52;
+    background: #ffffff;
+    border-right: 1px solid #e0e0e0;
 }
 
 /* Header */
 .app-header {
-    background: linear-gradient(135deg, #000d1f 0%, #001840 50%, #000d1f 100%);
-    border: 1px solid #0a2a52;
+    background: linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #1565c0 100%);
+    border: none;
     border-radius: 14px;
     padding: 28px 36px;
     margin-bottom: 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(21,101,192,0.25);
 }
 .app-header h1 {
     font-size: 26px;
@@ -53,16 +54,16 @@ section[data-testid="stSidebar"] {
 }
 .app-header p {
     font-size: 13px;
-    color: #5c8bb5;
+    color: #bbdefb;
     margin: 4px 0 0 0;
 }
 .header-badge {
-    background: #0d2d5e;
-    border: 1px solid #1565c0;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
     border-radius: 20px;
     padding: 6px 16px;
     font-size: 12px;
-    color: #64b5f6;
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -78,32 +79,32 @@ section[data-testid="stSidebar"] {
     font-weight: 500;
     border: 1px solid;
 }
-.pill-green { background:#001a0d; border-color:#1b5e20; color:#69f0ae; }
-.pill-blue  { background:#000d1f; border-color:#0d47a1; color:#64b5f6; }
-.pill-amber { background:#1a1100; border-color:#e65100; color:#ffb74d; }
-.pill-red   { background:#1a0000; border-color:#7f0000; color:#ef9a9a; }
+.pill-green { background:#e8f5e9; border-color:#43a047; color:#2e7d32; }
+.pill-blue  { background:#e3f2fd; border-color:#1976d2; color:#1565c0; }
+.pill-amber { background:#fff8e1; border-color:#fb8c00; color:#e65100; }
+.pill-red   { background:#ffebee; border-color:#e53935; color:#c62828; }
 
 /* Chat messages */
 .stChatMessage {
-    background: #00091f !important;
-    border: 1px solid #0a2a52 !important;
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
     border-radius: 10px !important;
 }
 
 /* Chunk card */
 .chunk-card {
-    background: linear-gradient(160deg, #000d1f 0%, #00122e 100%);
-    border: 1px solid #0a2a52;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-left: 4px solid #1565c0;
     border-radius: 10px;
     padding: 18px 20px;
     margin-bottom: 14px;
     transition: all 0.2s;
-    box-shadow: 0 2px 16px rgba(21,101,192,0.10);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .chunk-card:hover {
-    border-left-color: #2196f3;
-    box-shadow: 0 4px 24px rgba(33,150,243,0.22);
+    border-left-color: #1976d2;
+    box-shadow: 0 4px 16px rgba(21,101,192,0.15);
     transform: translateX(2px);
 }
 .chunk-header {
@@ -114,17 +115,17 @@ section[data-testid="stSidebar"] {
     flex-wrap: wrap;
     gap: 6px;
 }
-.chunk-meta { font-size: 12px; color: #4a7fa8; display: flex; align-items: center; gap: 8px; }
-.chunk-text { font-size: 14px; color: #b8d0ea; line-height: 1.75; }
+.chunk-meta { font-size: 12px; color: #546e7a; display: flex; align-items: center; gap: 8px; }
+.chunk-text { font-size: 14px; color: #37474f; line-height: 1.75; }
 
 /* Citation badge */
 .cite-badge {
-    background: #0d2d5e;
-    border: 1px solid #1565c0;
+    background: #e3f2fd;
+    border: 1px solid #1976d2;
     border-radius: 5px;
     padding: 3px 10px;
     font-size: 11px;
-    color: #64b5f6;
+    color: #1565c0;
     font-weight: 700;
     letter-spacing: 0.5px;
 }
@@ -132,12 +133,12 @@ section[data-testid="stSidebar"] {
 /* Score bar */
 .score-wrap { display: flex; align-items: center; gap: 8px; }
 .score-bar-bg {
-    background: #001433;
+    background: #eceff1;
     border-radius: 4px;
     height: 6px;
     width: 80px;
     overflow: hidden;
-    border: 1px solid #0a2a52;
+    border: 1px solid #cfd8dc;
 }
 .score-bar-fill { height: 100%; border-radius: 4px; }
 
@@ -148,46 +149,33 @@ section[data-testid="stSidebar"] {
     font-size: 11px;
     font-weight: 500;
 }
-.tag-text  { background:#001a33; border:1px solid #0d47a1; color:#64b5f6; }
-.tag-table { background:#001a1a; border:1px solid #006064; color:#4dd0e1; }
-.tag-struct{ background:#1a001a; border:1px solid #4a0072; color:#ce93d8; }
-
-/* LLM placeholder */
-.llm-box {
-    background: linear-gradient(135deg, #000d1f, #00122e);
-    border: 1px dashed #1565c0;
-    border-radius: 12px;
-    padding: 26px;
-    text-align: center;
-    margin-bottom: 22px;
-}
-.llm-box .icon { font-size: 32px; margin-bottom: 8px; }
-.llm-box h4 { color: #64b5f6; margin: 0 0 6px 0; font-size: 16px; }
-.llm-box p  { color: #4a7fa8; font-size: 13px; margin: 0; }
+.tag-text  { background:#e3f2fd; border:1px solid #1976d2; color:#1565c0; }
+.tag-table { background:#e0f2f1; border:1px solid #00897b; color:#00695c; }
+.tag-struct{ background:#f3e5f5; border:1px solid #8e24aa; color:#6a1b9a; }
 
 /* Citations summary */
 .citations-box {
-    background: #000d1f;
-    border: 1px solid #0a2a52;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-radius: 10px;
     padding: 14px 18px;
     margin-bottom: 18px;
 }
-.citations-box h5 { color: #5c8bb5; font-size: 12px; text-transform: uppercase;
+.citations-box h5 { color: #546e7a; font-size: 12px; text-transform: uppercase;
                     letter-spacing: 1px; margin: 0 0 10px 0; }
 .cite-item { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.cite-num  { background: #0d2d5e; border: 1px solid #1565c0; border-radius: 4px;
-             padding: 1px 8px; font-size: 11px; color: #64b5f6; font-weight: 700;
+.cite-num  { background: #e3f2fd; border: 1px solid #1976d2; border-radius: 4px;
+             padding: 1px 8px; font-size: 11px; color: #1565c0; font-weight: 700;
              min-width: 28px; text-align: center; }
-.cite-info { font-size: 12px; color: #4a7fa8; }
+.cite-info { font-size: 12px; color: #546e7a; }
 
 /* Sidebar */
 .sidebar-section { margin-bottom: 20px; }
-.sidebar-section h4 { color: #1e88e5; font-size: 13px; text-transform: uppercase;
+.sidebar-section h4 { color: #1565c0; font-size: 13px; text-transform: uppercase;
                        letter-spacing: 1px; margin-bottom: 12px; }
 .sidebar-stat {
-    background: #000d1f;
-    border: 1px solid #0a2a52;
+    background: #f5f7fa;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 10px 14px;
     margin-bottom: 8px;
@@ -195,47 +183,46 @@ section[data-testid="stSidebar"] {
     justify-content: space-between;
     align-items: center;
 }
-.stat-label { font-size: 12px; color: #4a7fa8; }
-.stat-value { font-size: 14px; color: #64b5f6; font-weight: 600; }
+.stat-label { font-size: 12px; color: #546e7a; }
+.stat-value { font-size: 14px; color: #1565c0; font-weight: 600; }
 
 /* Inputs */
 .stTextInput input, .stSelectbox select {
-    background: #000d1f !important;
-    border: 1px solid #0a2a52 !important;
-    color: #c8dff5 !important;
+    background: #ffffff !important;
+    border: 1px solid #cfd8dc !important;
+    color: #1a1a2e !important;
     border-radius: 8px !important;
 }
 .stTextInput input:focus { border-color: #1565c0 !important; }
-.stSlider .stSlider { color: #1565c0 !important; }
 
 /* Chat input */
 .stChatInputContainer {
-    background: #00091f !important;
-    border-top: 1px solid #0a2a52 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e0e0e0 !important;
     padding: 12px !important;
 }
 [data-testid="stChatInput"] {
-    background: #000d1f !important;
-    border: 1px solid #0a2a52 !important;
+    background: #f8f9fa !important;
+    border: 1px solid #cfd8dc !important;
     border-radius: 10px !important;
-    color: #c8dff5 !important;
+    color: #1a1a2e !important;
 }
 
 /* Divider */
-hr { border-color: #0a2a52 !important; margin: 16px 0 !important; }
+hr { border-color: #e0e0e0 !important; margin: 16px 0 !important; }
 
 /* Button */
 .stButton button {
-    background: #0d2d5e !important;
-    border: 1px solid #1565c0 !important;
-    color: #64b5f6 !important;
+    background: #1565c0 !important;
+    border: 1px solid #1976d2 !important;
+    color: #ffffff !important;
     border-radius: 8px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
     width: 100%;
 }
 .stButton button:hover {
-    background: #1565c0 !important;
+    background: #1976d2 !important;
     color: #ffffff !important;
 }
 </style>
@@ -387,8 +374,8 @@ if question:
 
                     # Confidence badge
                     conf_pct  = int(confidence * 100)
-                    conf_col  = "#69f0ae" if confidence >= 0.7 else "#ffb74d" if confidence >= 0.4 else "#ef9a9a"
-                    cache_tag = ' <span style="background:#001a33;border:1px solid #0d47a1;border-radius:10px;padding:2px 10px;font-size:11px;color:#64b5f6;">⚡ cached</span>' if cache_hit else ""
+                    conf_col  = "#2e7d32" if confidence >= 0.7 else "#e65100" if confidence >= 0.4 else "#c62828"
+                    cache_tag = ' <span style="background:#e3f2fd;border:1px solid #1976d2;border-radius:10px;padding:2px 10px;font-size:11px;color:#1565c0;">⚡ cached</span>' if cache_hit else ""
                     st.markdown(
                         f'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
                         f'<span style="font-size:12px;color:#4a7fa8;">Confidence</span>'
