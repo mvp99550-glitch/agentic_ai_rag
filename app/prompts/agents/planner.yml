@@ -31,14 +31,14 @@ system: |
   Return a JSON object — no prose, no explanation:
 
   ```json
-  {
+  {{
     "sub_tasks": [
       "specific retrieval query 1",
       "specific retrieval query 2"
     ],
     "reasoning": "one sentence explaining the decomposition",
     "estimated_complexity": "low | medium | high"
-  }
+  }}
   ```
   </output_format>
 

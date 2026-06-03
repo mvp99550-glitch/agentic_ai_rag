@@ -11,8 +11,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.api.routes import query as query_route
+from app.api.routes import agent as agent_route
 from app.memory.store import setup_tables, ping as pg_ping
 from app.memory.session import ping as redis_ping
+from app.observability import splunk
+from app.retrieval.reranker import warmup as warmup_reranker
 
 # Rate limiter — 20 requests/minute per IP
 limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
@@ -38,6 +41,8 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     setup_tables()
+    warmup_reranker()
+    splunk.start_metrics(interval=60)
     print(f"  PostgreSQL : {'OK' if pg_ping()    else 'FAIL'}")
     print(f"  Redis      : {'OK' if redis_ping() else 'FAIL'}")
 
@@ -53,3 +58,4 @@ def health():
 
 
 app.include_router(query_route.router, prefix="/api/v1")
+app.include_router(agent_route.router, prefix="/api/v1")

@@ -6,7 +6,7 @@ Three evaluation layers:
             comparing the agent's answer to the gold answer.
   Layer 2 — Trajectory Quality (deterministic): paragraph retrieval precision/recall,
             action sequence order (LCS vs gold), and search efficiency.
-  Layer 3 — Reasoning Quality (LLM-as-judge): Claude scores the agent's trajectory
+  Layer 3 — Reasoning Quality (LLM-as-judge): Groq scores the agent's trajectory
             on groundedness, reasoning coherence, and search strategy (1-5 each)
             using rubrics from rubrics/*.md.
 
@@ -27,8 +27,9 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
 from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage
+from langchain_groq import ChatGroq
 from langfuse import Langfuse
 
 from agent import run_agent
@@ -36,14 +37,18 @@ from agent import run_agent
 load_dotenv()
 
 DATASET_NAME = "finance-hotpotqa-10"
-JUDGE_MODEL = "claude-sonnet-4-6"
+JUDGE_MODEL  = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 langfuse = Langfuse(
     public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
     secret_key=os.environ["LANGFUSE_SECRET_KEY"],
     host=os.environ["LANGFUSE_HOST"],
 )
-judge_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+judge_llm = ChatGroq(
+    model=JUDGE_MODEL,
+    api_key=os.environ["GROQ_API_KEY"],
+    max_tokens=4000,
+)
 
 
 # ── Layer 1: Answer Quality (deterministic) ──────────────────────────────────
@@ -210,10 +215,10 @@ def judge_reasoning(
     rubric_name: str,
     rubric_text: str,
 ) -> int:
-    """Use Claude as a judge to score one reasoning dimension (1-5).
+    """Use Groq as a judge to score one reasoning dimension (1-5).
 
     Sends the question, agent trajectory, agent answer, gold answer, and rubric
-    to a separate Claude call. The judge sees the full tool call sequence but
+    to a separate Groq call. The judge sees the full tool call sequence but
     NOT the gold supporting_facts (to avoid leaking evidence).
 
     Returns an integer score 1-5 (clamped). Falls back to 1 on parse failure.
@@ -258,20 +263,16 @@ Respond with ONLY a JSON object: {{"reasoning": "brief explanation", "score": N}
         model=JUDGE_MODEL,
         input=prompt,
     ) as generation:
-        response = judge_client.messages.create(
-            model=JUDGE_MODEL,
-            max_tokens=4000,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        response = judge_llm.invoke([HumanMessage(content=prompt)])
         generation.update(
-            output=response.content[0].text,
+            output=response.content,
             usage_details={
-                "input": response.usage.input_tokens,
-                "output": response.usage.output_tokens,
+                "input":  getattr(response.usage_metadata, "input_tokens",  0),
+                "output": getattr(response.usage_metadata, "output_tokens", 0),
             },
         )
 
-    text = response.content[0].text.strip()
+    text = response.content.strip()
     try:
         result = json.loads(text)
         score = int(result["score"])
