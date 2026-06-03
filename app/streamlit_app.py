@@ -242,10 +242,12 @@ hr { border-color: #0a2a52 !important; margin: 16px 0 !important; }
 """, unsafe_allow_html=True)
 
 # ── Session state ─────────────────────────────────────────────────────────────
-if "session_id"    not in st.session_state: st.session_state.session_id    = str(uuid.uuid4())
-if "chat_history"  not in st.session_state: st.session_state.chat_history  = []
-if "query_count"   not in st.session_state: st.session_state.query_count   = 0
-if "total_chunks"  not in st.session_state: st.session_state.total_chunks  = 0
+if "session_id"       not in st.session_state: st.session_state.session_id       = str(uuid.uuid4())
+if "chat_history"     not in st.session_state: st.session_state.chat_history     = []
+if "query_count"      not in st.session_state: st.session_state.query_count      = 0
+if "cache_hits"       not in st.session_state: st.session_state.cache_hits       = 0
+if "last_confidence"  not in st.session_state: st.session_state.last_confidence  = None
+if "last_duration_ms" not in st.session_state: st.session_state.last_duration_ms = None
 
 # ── Health check ──────────────────────────────────────────────────────────────
 health = {}
@@ -266,11 +268,11 @@ with st.sidebar:
         ("PostgreSQL", health.get("postgres", False), "🗄️"),
         ("Redis",      health.get("redis",    False), "⚡"),
         ("Qdrant",     bool(health),                  "🔍"),
-        ("LLM",        health.get("llm_ready",False), "🤖"),
+        ("LLM Agent",  bool(health),                  "🤖"),
     ]
     for name, ok, icon in services:
-        label  = "Ready"   if ok else ("Coming soon" if name == "LLM" else "Offline")
-        cls    = "pill-green" if ok else ("pill-amber" if name == "LLM" else "pill-red")
+        label  = "Ready" if ok else "Offline"
+        cls    = "pill-green" if ok else "pill-red"
         dot    = "●"
         st.markdown(
             f'<div class="status-pill {cls}">{icon} {name} <span>{dot} {label}</span></div>',
@@ -287,30 +289,36 @@ with st.sidebar:
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("🔄  New Session"):
-        st.session_state.session_id   = str(uuid.uuid4())
-        st.session_state.chat_history = []
-        st.session_state.query_count  = 0
-        st.session_state.total_chunks = 0
+        st.session_state.session_id       = str(uuid.uuid4())
+        st.session_state.chat_history     = []
+        st.session_state.query_count      = 0
+        st.session_state.cache_hits       = 0
+        st.session_state.last_confidence  = None
+        st.session_state.last_duration_ms = None
         st.rerun()
 
     st.markdown("---")
 
-    # Settings
-    st.markdown('<div class="sidebar-section"><h4>Retrieval</h4>', unsafe_allow_html=True)
-    top_k = st.slider("Chunks to retrieve", 1, 10, 5)
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("---")
-
     # Session stats
     st.markdown('<div class="sidebar-section"><h4>Session Stats</h4>', unsafe_allow_html=True)
+    conf_val = f"{st.session_state.last_confidence:.2f}" if st.session_state.last_confidence is not None else "—"
+    dur_val  = f"{st.session_state.last_duration_ms:.0f} ms" if st.session_state.last_duration_ms is not None else "—"
     st.markdown(f"""
     <div class="sidebar-stat">
         <span class="stat-label">Queries</span>
         <span class="stat-value">{st.session_state.query_count}</span>
     </div>
     <div class="sidebar-stat">
-        <span class="stat-label">Chunks retrieved</span>
-        <span class="stat-value">{st.session_state.total_chunks}</span>
+        <span class="stat-label">Cache hits</span>
+        <span class="stat-value">{st.session_state.cache_hits}</span>
+    </div>
+    <div class="sidebar-stat">
+        <span class="stat-label">Last confidence</span>
+        <span class="stat-value">{conf_val}</span>
+    </div>
+    <div class="sidebar-stat">
+        <span class="stat-label">Last duration</span>
+        <span class="stat-value">{dur_val}</span>
     </div>
     """, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -326,7 +334,7 @@ st.markdown("""
         <h1>📊 Corporate Finance Assistant</h1>
         <p>Powered by RAG · Semantic + Keyword Search · Multi-collection retrieval</p>
     </div>
-    <div class="header-badge">● Retrieval Ready</div>
+    <div class="header-badge">● Agent Ready</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -346,92 +354,76 @@ if question:
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("Searching knowledge base…"):
+        with st.spinner("Thinking… this may take 10–20 seconds"):
             try:
                 resp = requests.post(
-                    f"{API_BASE}/query",
-                    json={
-                        "question":   question,
-                        "tenant_id":  tenant_id,
-                        "user_id":    user_id,
-                        "session_id": st.session_state.session_id,
-                        "top_k":      top_k,
-                    },
+                    f"{API_BASE}/agent",
+                    json={"question": question},
                     headers={
                         "X-Tenant-Id":  tenant_id,
                         "X-User-Id":    user_id,
                         "X-Session-Id": st.session_state.session_id,
                     },
-                    timeout=30,
+                    timeout=120,
                 )
-                data   = resp.json()
-                chunks = data.get("chunks", [])
-                cites  = data.get("citations", [])
-                st.session_state.total_chunks += len(chunks)
 
-                # LLM placeholder
-                st.markdown("""
-<div class="llm-box">
-    <div class="icon">🤖</div>
-    <h4>AI Answer</h4>
-    <p>LLM will generate a synthesised answer here once the API key is configured.<br>
-    Relevant sources are retrieved and ready below.</p>
-</div>""", unsafe_allow_html=True)
+                if resp.status_code == 400:
+                    st.warning(f"⚠️ {resp.json().get('detail', 'Request blocked.')}")
+                else:
+                    data       = resp.json()
+                    answer     = data.get("answer", "")
+                    sources    = data.get("sources", [])
+                    confidence = data.get("confidence", 0.0)
+                    plan       = data.get("plan", [])
+                    iterations = data.get("iteration_count", 0)
+                    duration   = data.get("duration_ms", 0)
+                    cache_hit  = data.get("cache_hit", False)
 
-                # Citations summary
-                if cites:
-                    cite_html = '<div class="citations-box"><h5>📎 Sources Retrieved</h5>'
-                    for c in cites:
-                        section = (c.get("section") or "—")[:55]
-                        cite_html += f"""
+                    # Update session stats
+                    st.session_state.last_confidence  = confidence
+                    st.session_state.last_duration_ms = duration
+                    if cache_hit:
+                        st.session_state.cache_hits += 1
+
+                    # Confidence badge
+                    conf_pct  = int(confidence * 100)
+                    conf_col  = "#69f0ae" if confidence >= 0.7 else "#ffb74d" if confidence >= 0.4 else "#ef9a9a"
+                    cache_tag = ' <span style="background:#001a33;border:1px solid #0d47a1;border-radius:10px;padding:2px 10px;font-size:11px;color:#64b5f6;">⚡ cached</span>' if cache_hit else ""
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+                        f'<span style="font-size:12px;color:#4a7fa8;">Confidence</span>'
+                        f'<span style="font-size:15px;font-weight:700;color:{conf_col};">{conf_pct}%</span>'
+                        f'<span style="font-size:12px;color:#4a7fa8;">· {iterations} iteration(s) · {duration:.0f} ms</span>'
+                        f'{cache_tag}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    # Answer
+                    st.markdown(answer)
+
+                    # Plan expander
+                    if plan:
+                        with st.expander(f"🧠 Retrieval plan ({len(plan)} sub-tasks)", expanded=False):
+                            for i, task in enumerate(plan, 1):
+                                st.markdown(f"**{i}.** {task}")
+
+                    # Sources
+                    if sources:
+                        cite_html = '<div class="citations-box"><h5>📎 Sources Used</h5>'
+                        for i, s in enumerate(sources, 1):
+                            section = (s.get("section") or "—")[:60]
+                            score   = s.get("score", 0.0)
+                            cite_html += f"""
 <div class="cite-item">
-    <span class="cite-num">[{c['number']}]</span>
-    <span class="cite-info">Page {c.get('page','?')} &nbsp;·&nbsp; {section}</span>
+    <span class="cite-num">[{i}]</span>
+    <span class="cite-info">Page {s.get('page','?')} &nbsp;·&nbsp; {section} &nbsp;·&nbsp; score {score:.3f}</span>
 </div>"""
-                    cite_html += "</div>"
-                    st.markdown(cite_html, unsafe_allow_html=True)
+                        cite_html += "</div>"
+                        st.markdown(cite_html, unsafe_allow_html=True)
 
-                # Chunk cards
-                st.markdown(f"#### Retrieved Chunks &nbsp; <small style='color:#4a7fa8;font-weight:400'>({len(chunks)} results)</small>", unsafe_allow_html=True)
-
-                for chunk in chunks:
-                    score   = chunk["score"]
-                    pct     = int(score * 100)
-                    bar_col = "#29b6f6" if score >= 0.7 else "#0288d1" if score >= 0.5 else "#0d47a1"
-                    page    = chunk.get("page", "?")
-                    section = (chunk.get("section") or "")[:55]
-                    source  = chunk.get("source", "text")
-                    coll    = chunk.get("collection", "")
-
-                    tag_cls  = "tag-table"  if source == "table" else "tag-struct" if "structure" in coll else "tag-text"
-                    tag_lbl  = "📊 Table"   if source == "table" else "🗂️ Structure" if "structure" in coll else "📝 Text"
-
-                    st.markdown(f"""
-<div class="chunk-card">
-    <div class="chunk-header">
-        <div class="chunk-meta">
-            <span class="cite-badge">[{chunk['citation_number']}]</span>
-            <span>Page {page}</span>
-            <span>·</span>
-            <span>{section}</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span class="source-tag {tag_cls}">{tag_lbl}</span>
-            <div class="score-wrap">
-                <div class="score-bar-bg">
-                    <div class="score-bar-fill" style="width:{pct}%;background:{bar_col};"></div>
-                </div>
-                <span style="font-size:12px;color:{bar_col};font-weight:600;">{score:.3f}</span>
-            </div>
-        </div>
-    </div>
-    <div class="chunk-text">{chunk['text'][:450]}{"…" if len(chunk['text']) > 450 else ""}</div>
-</div>""", unsafe_allow_html=True)
-
-                reply = f"Found **{len(chunks)} sources** for: *{question}*"
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
             except requests.exceptions.ConnectionError:
-                st.error("⚠️ API server not reachable. Run: `uv run uvicorn app.main_api:app --reload --port 8000`")
+                st.error("⚠️ API server not reachable. Run: `uv run uvicorn app.main_api:app`")
             except Exception as e:
                 st.error(f"Error: {e}")

@@ -1,6 +1,6 @@
 from app.agents.graph.state import AgentState
 
-MAX_RETRIEVAL_ITERATIONS = 3
+MAX_RETRIEVAL_ITERATIONS = 2
 
 
 def route_after_reasoner(state: AgentState) -> str:
