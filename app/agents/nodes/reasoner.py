@@ -16,11 +16,32 @@ def reasoner_node(state: AgentState) -> dict:
     splunk.node_step(node="reasoner", phase="enter", trajectory_id=trajectory_id,
                      session_id=session_id, iteration_count=iteration)
 
+    chunks = state.get("retrieved_chunks") or []
+
+    # Assumption drift guard: skip the LLM call entirely when there are no chunks.
+    # Calling the LLM against "No chunks retrieved." risks a spurious
+    # context_sufficient=True or wastes a Groq token budget.
+    if not chunks:
+        gap = f"No relevant chunks found for: {state['question'][:80]}"
+        splunk.node_step(
+            node="reasoner", phase="exit",
+            trajectory_id=trajectory_id, session_id=session_id,
+            iteration_count=iteration,
+            duration_ms=round((time.time() - t0) * 1000, 2),
+            context_sufficient=False,
+            confidence=0.0,
+        )
+        return {
+            "context_sufficient": False,
+            "retrieval_gap":      gap,
+            "confidence":         0.0,
+        }
+
     prompt = load_prompt("reasoner")
 
     system_text = prompt["system"].format(
         question=state["question"],
-        retrieved_chunks=format_chunks(state.get("retrieved_chunks", [])),
+        retrieved_chunks=format_chunks(chunks),
     )
 
     response = get_llm().invoke([SystemMessage(content=system_text)])

@@ -152,6 +152,7 @@ def run(
         "confidence":         0.0,
         "iteration_count":    0,
         "trajectory_id":      trajectory_id,
+        "retrieval_empty":    False,
     }
 
     config      = {"configurable": {"thread_id": session_id}}

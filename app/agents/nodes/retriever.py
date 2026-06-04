@@ -54,6 +54,22 @@ def retriever_node(state: AgentState) -> dict:
     if prefix:
         all_chunks = session_mem.filter_new_chunks(prefix, all_chunks)
 
+    # Assumption drift guard: gap-based re-entry returned nothing → fall back to
+    # the original question so the generator has something to work with rather
+    # than proceeding on an invalid "we have context" assumption.
+    if not all_chunks and gap:
+        fallback: list[dict] = []
+        for chunk in hybrid_search(state["question"], "finance_content", top_k=_FETCH_K):
+            if chunk["text"] not in seen:
+                seen.add(chunk["text"])
+                fallback.append(chunk)
+        reranked_fb = rerank(state["question"], fallback, top_k=_RERANK_K)
+        if prefix:
+            reranked_fb = session_mem.filter_new_chunks(prefix, reranked_fb)
+        all_chunks = reranked_fb
+
+    retrieval_empty = len(all_chunks) == 0
+
     new_iteration = iteration + 1
     splunk.node_step(
         node="retriever", phase="exit",
@@ -61,9 +77,11 @@ def retriever_node(state: AgentState) -> dict:
         iteration_count=new_iteration,
         duration_ms=round((time.time() - t0) * 1000, 2),
         chunk_count=len(all_chunks),
+        retrieval_empty=retrieval_empty,
     )
 
     return {
         "retrieved_chunks": all_chunks,
         "iteration_count":  new_iteration,
+        "retrieval_empty":  retrieval_empty,
     }

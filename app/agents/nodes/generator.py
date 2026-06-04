@@ -23,42 +23,67 @@ def generator_node(state: AgentState) -> dict:
     splunk.node_step(node="generator", phase="enter", trajectory_id=trajectory_id,
                      session_id=sid, iteration_count=iteration)
 
-    prompt  = load_prompt("generator")
-    chunks  = state.get("retrieved_chunks") or []
-    history = session_mem.get_history(sid, *_split_prefix(sid)) if sid else []
+    chunks             = state.get("retrieved_chunks") or []
+    context_sufficient = state.get("context_sufficient", True)
+    retrieval_gap      = state.get("retrieval_gap", "")
+    guard_blocked      = False
 
-    system_text = prompt["system"].format(
-        retrieved_chunks=format_chunks(chunks),
-        session_history=format_history(history),
-    )
+    # Premature abandonment guard: when retrieval returned nothing at all, skip
+    # the LLM entirely — generating from an empty context produces hallucination.
+    if not chunks:
+        answer     = (
+            "I could not find relevant information in the textbook to answer this question. "
+            "Please try rephrasing, or check that the topic is covered in the corporate finance material."
+        )
+        confidence = 0.0
+        sources    = []
+    else:
+        prompt  = load_prompt("generator")
+        history = session_mem.get_history(sid, *_split_prefix(sid)) if sid else []
 
-    response = get_llm().invoke([
-        SystemMessage(content=system_text),
-        HumanMessage(content=state["question"]),
-    ])
-    answer = response.content.strip()
-
-    # Output guardrail — appends a warning note rather than hard-blocking
-    guard = output_guard_check(answer, chunks)
-    if guard.blocked:
-        answer += f"\n\n> **Quality note:** {guard.reason}"
-        splunk.security_event(
-            event_type="output_guard_block",
-            guard_type="output",
-            reason=guard.reason,
-            trajectory_id=trajectory_id,
-            session_id=sid,
+        system_text = prompt["system"].format(
+            retrieved_chunks=format_chunks(chunks),
+            session_history=format_history(history),
         )
 
-    sources = [
-        {
-            "page":    c.get("page"),
-            "section": c.get("section", ""),
-            "source":  c.get("source", ""),
-            "score":   c.get("score", 0.0),
-        }
-        for c in chunks[:5]
-    ]
+        response = get_llm().invoke([
+            SystemMessage(content=system_text),
+            HumanMessage(content=state["question"]),
+        ])
+        answer = response.content.strip()
+
+        # Premature abandonment guard: when the iteration cap fired before the
+        # reasoner was satisfied, append an explicit gap caveat so the user knows
+        # the answer may be incomplete rather than silently receiving a partial response.
+        if not context_sufficient and retrieval_gap:
+            answer += f"\n\n> **Note:** The retrieved context may not fully cover this question. Missing: {retrieval_gap}"
+
+        # Output guardrail — appends a warning note rather than hard-blocking
+        guard = output_guard_check(answer, chunks)
+        guard_blocked = guard.blocked
+        if guard.blocked:
+            answer += f"\n\n> **Quality note:** {guard.reason}"
+            splunk.security_event(
+                event_type="output_guard_block",
+                guard_type="output",
+                reason=guard.reason,
+                trajectory_id=trajectory_id,
+                session_id=sid,
+            )
+
+        # Cap confidence when context was not fully sufficient (forced generate)
+        raw_confidence = state.get("confidence", 0.5)
+        confidence = min(raw_confidence, 0.4) if not context_sufficient else raw_confidence
+
+        sources = [
+            {
+                "page":    c.get("page"),
+                "section": c.get("section", ""),
+                "source":  c.get("source", ""),
+                "score":   c.get("score", 0.0),
+            }
+            for c in chunks[:5]
+        ]
 
     # Persist exchange — msg_id ties each message to this trajectory run
     # so a retried generator call never duplicates history entries
@@ -73,11 +98,11 @@ def generator_node(state: AgentState) -> dict:
         duration_ms=round((time.time() - t0) * 1000, 2),
         answer_length=len(answer),
         source_count=len(sources),
-        guard_blocked=guard.blocked,
+        guard_blocked=guard_blocked,
     )
 
     return {
         "answer":     answer,
         "sources":    sources,
-        "confidence": state.get("confidence", 0.5),
+        "confidence": confidence,
     }
