@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "PowerShell(tree \"e:\\\\Agentic_AI_Rag\" -L 2 -A 2>&1)",
-      "PowerShell(head -100)"
+      "PowerShell(head -100)",
+      "Bash(git push *)",
+      "Bash(del _strip_coauthor.py)"
     ]
   }
 }
